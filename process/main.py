@@ -74,6 +74,8 @@ from process.impurity_radiation import initialise_imprad
 from pathlib import Path
 import os
 import logging
+import numpy as np
+import json
 
 # For VaryRun
 from process.io.process_config import RunProcessConfig
@@ -470,7 +472,56 @@ class SingleRun:
                 caller.call_models(x)
                 self.ifail = 6
 
+                # Output responses for UQ
+                self.output_responses()
+
             final.finalise(self.models, self.ifail)
+
+    def output_responses(self):
+        """Calculate responses for UQ and output to JSON."""
+        responses = {}
+
+        # Objective function
+        obj_func = fortran.function_evaluator.funfom()
+        responses["obj_func"] = obj_func
+
+        # Collect constraints
+        neqns = fortran.numerics.neqns
+        nineqns = fortran.numerics.nineqns
+        m = neqns + nineqns
+        constrs, _, _, _, _ = fortran.constraints.constraint_eqns(m, -1)
+
+        # Calculate RMS constraint residuals for violated constraints only
+        eq_constrs = constrs[:neqns]
+        ineq_constrs = constrs[neqns:]
+        # Make feasible constraints (> 0) = 0
+        ineq_constrs[ineq_constrs > 0] = 0.0
+        vio_constrs = np.concatenate([eq_constrs, ineq_constrs])
+        rms_vio_constr_res = np.sqrt(np.mean(vio_constrs**2))
+        responses["rms_vio_constr_res"] = rms_vio_constr_res
+
+        # Add individual constraint values
+        # Numbers of the constraints active for this problem
+        constr_nums = fortran.numerics.icc
+        for i, constr_val in enumerate(constrs):
+            if i < neqns:
+                constr_prefix = "eq"
+            else:
+                constr_prefix = "ineq"
+                # TODO Not sure if we want to mask non-violated constraint
+                # values at this stage
+                # Only want violated constraint values
+                # Make feasible inequality constraints (> 0) = 0.0
+                if constr_val > 0:
+                    constr_val = 0.0
+
+            constr_num = constr_nums[i]
+            responses[f"{constr_prefix}_{constr_num}"] = constr_val
+
+        # Dump responses to JSON
+        responses_file = Path("responses.json")
+        with open(responses_file, "w+") as file:
+            json.dump(responses, file, indent=4)
 
     def show_errors(self):
         """Report all informational/error messages encountered."""
