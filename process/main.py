@@ -596,6 +596,7 @@ class Models:
             plasma_profile=self.plasma_profile,
             hcpb=self.ccfe_hcpb,
             current_drive=self.current_drive,
+            sctfcoil=self.sctfcoil,
         )
         self.costs_2015 = Costs2015()
         self.physics = Physics(
