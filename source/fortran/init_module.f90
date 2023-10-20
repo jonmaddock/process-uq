@@ -101,6 +101,14 @@ contains
       call init_dcll_module
    end subroutine init_all_module_vars
 
+   subroutine new_mfile
+      ! Open fresh mfile to write output again
+      use global_variables, only: verbose, fileprefix, output_prefix
+      use constants, only: opt_file, vfile, nout, nplot, mfile, sig_file
+      implicit none
+      open(unit=mfile    ,file=trim(output_prefix)//'MFILE.DAT' ,status='unknown')
+   end subroutine new_mfile
+
    subroutine init
 
       !! Routine that calls the initialisation routines

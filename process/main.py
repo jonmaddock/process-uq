@@ -77,6 +77,7 @@ import os
 import logging
 import numpy as np
 import json
+from shutil import move
 
 # For VaryRun
 from process.io.process_config import RunProcessConfig
@@ -467,18 +468,26 @@ class SingleRun:
                 fortran.define_iteration_variables.loadxc()
                 n = fortran.numerics.nvar
                 x = fortran.numerics.xcm[:n]
+                # 0 model calls: write mfile
+                self.ifail = 6
+                # Crashes if try to run finalise here
+                # final.finalise(self.models, self.ifail)
+
                 caller = Caller(self.models, x)
+                # 1 model calls: write output
+                final.finalise(self.models, self.ifail)
+                move("large_tokamak_once_MFILE.DAT", "call_1_MFILE.DAT")
 
                 # To ensure that, at the start of a run, all physics/engineering
                 # variables are fully initialised with consistent values, we perform
                 # a second evaluation call here
-                caller.call_models(x)
-                self.ifail = 6
 
-                # Output responses for UQ
-                self.output_responses()
-
-            final.finalise(self.models, self.ifail)
+                # Now testing multiple model calls: keep dumping output instead
+                for i in range(2, 11):
+                    fortran.init_module.new_mfile()
+                    caller.call_models(x)
+                    final.finalise(self.models, self.ifail)
+                    move("large_tokamak_once_MFILE.DAT", f"call_{i}_MFILE.DAT")
 
     def output_responses(self):
         """Calculate responses for UQ and output to JSON."""
