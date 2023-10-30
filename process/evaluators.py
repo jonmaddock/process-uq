@@ -54,7 +54,9 @@ class Evaluators:
         conf = np.zeros(m, dtype=np.float64, order="F")
 
         # Evaluate machine parameters at xv
-        self.caller.call_models(xv)
+        # Evaluate models 6 times to reduce effects of non-idempotence
+        for call in range(6):
+            self.caller.call_models(xv)
 
         # Convergence loop to ensure burn time consistency
         if sv.istell == 0:
@@ -143,12 +145,16 @@ class Evaluators:
                     xbac[i] = xv[j] * (1.0 - numerics.epsfcn)
 
             # Evaluate at (x+dx)
-            self.caller.call_models(xfor)
+            # Evaluate models 6 times to reduce effects of non-idempotence
+            for call in range(6):
+                self.caller.call_models(xfor)
             ffor = function_evaluator.funfom()
             cfor, _, _, _, _ = constraints.constraint_eqns(m, -1)
 
             # Evaluate at (x-dx)
-            self.caller.call_models(xbac)
+            # Evaluate models 6 times to reduce effects of non-idempotence
+            for call in range(6):
+                self.caller.call_models(xbac)
             fbac = function_evaluator.funfom()
             cbac, _, _, _, _ = constraints.constraint_eqns(m, -1)
 
@@ -164,6 +170,8 @@ class Evaluators:
         # variable in the solution vector is inconsistent with its value
         # shown elsewhere in the output file, which is a factor (1-epsfcn)
         # smaller (i.e. its xbac value above).
-        self.caller.call_models(xv)
+        # Evaluate models 6 times to reduce effects of non-idempotence
+        for call in range(6):
+            self.caller.call_models(xv)
 
         return fgrd, cnorm
