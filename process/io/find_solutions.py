@@ -1,6 +1,7 @@
 """Tests for the Process solver."""
 import time
 from numpy import histogram
+import process
 from process.io.mfile import MFile
 from process.io.python_fortran_dicts import get_dicts
 from process.io.process_config import TestProcessConfig
@@ -67,6 +68,9 @@ def find_solutions(config_path, solver_config="solver.toml"):
     CONFIG = TestProcessConfig(config_path)
     CONFIG.setup()
 
+    process.fortran.init_module.init_all_module_vars()
+    process.fortran.init_module.init()
+
     NEQNS, ITERVARS = get_neqns_itervars()
 
     update_ixc_bounds()
@@ -95,7 +99,7 @@ def find_solutions(config_path, solver_config="solver.toml"):
         print(i, end=" ")
 
         # Actually perform the Process run for this varied input file
-        CONFIG.run_process(input_path, solver_config=solver_config)
+        CONFIG.run_process(input_path)
 
         check_input_error()
 
