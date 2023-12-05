@@ -138,13 +138,17 @@ def find_solutions(config_path, solver_config="solver.toml"):
             if ifail == IFAIL_SUCCESS and process_warnings():
                 WARNING_CNT += 1
 
+            # Status
+            print(f"Run {i}", flush=True)
             if ifail == 1:
                 # Process converged: save the mfile
-                print(f"Process converged. {converged_runs_count = }")
+                converged_runs_count += 1
+                print(f"Process converged. {converged_runs_count = }", flush=True)
                 current_mfile = Path("MFILE.DAT")
                 renamed_mfile = Path(f"sol_{converged_runs_count}_MFILE.DAT")
                 current_mfile.rename(renamed_mfile)
-                converged_runs_count += 1
+            else:
+                print(f"Process failed to converge.", flush=True)
 
         TABLE_OUT += [table_sol + table_res]
         TABLE_ERR += [ifail]
