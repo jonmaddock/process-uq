@@ -28,7 +28,7 @@ class Evaluators:
         # NOTE: at some point this should be replaced with a consistency
         # check that runs the models until convergence (or we exceed some
         # maximum number of repeats)
-        self.calls_per_model_evaluation = 6
+        self.calls_per_model_evaluation = 1
         """Everytime PROCESS wants to evaluate the outputs for some
         input vector, it will run the models this many times before
         capturing the output to allow the answer to converge. This
