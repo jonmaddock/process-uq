@@ -11,6 +11,7 @@
 *.dat
 *.dylib
 *.13
+fort.*
 /test_suite/*.xunit
 /test_suite/bindir.py
 /test_suite/test_area/*
@@ -41,7 +42,6 @@ MFILE.DAT
 PLOT.DAT
 OUT.DAT
 OPT.DAT
-SIG_TF.DAT
 SIG_TF.json
 tag.num
 tests.x
@@ -50,19 +50,7 @@ untracked.info
 com.msg
 Katy_test/*
 KatyTest/*
-PLASMOD/CHARTST/*
-PLASMOD/*.DAT
-PLASMOD/*.dat
-PLASMOD/fort.*
-PLASMOD/output_list.txt
-PLASMOD/KE*
 *~
-lib/PLASMOD/CHARTST/*
-lib/PLASMOD/*.DAT
-/lib/PLASMOD/*.dat
-/lib/PLASMOD/fort.*
-/lib/PLASMOD/output_list.txt
-/lib/PLASMOD/KE*
 /utilities/run_process.conf
 *.fdb_latexmk
 *.fls

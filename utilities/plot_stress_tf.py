@@ -7,7 +7,7 @@ The whole radial distribution is displayed
 Author: S. Kahn (sebastien.kahn@ukaea.uk)
 
 Input file:
-SIG_TF.DAT
+SIG_TF.json
 """
 
 import json
@@ -35,7 +35,7 @@ if __name__ == "__main__":
         "--plot_selec",
         nargs="?",
         default="all",
-        help="Plot selection string :\n - If it containts 'sig'      -> Stress radial dependency \n - If it containts 'strain'   -> Strain \n - If it containts 'disp'     -> Displacement \n - If it containts 'all'      -> all the mentionned plots (default value)",
+        help="Plot selection string :\n - If it containts 'sig'      -> Stress radial dependency \n - If it containts 'strain'   -> Strain \n - If it containts 'disp'     -> Displacement \n - If it containts 'all'      -> all the mentioned plots (default value)",
     )
     parser.add_argument(
         "-sf",
@@ -61,8 +61,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "-f",
         "--input_file",
-        default="SIG_TF.DAT",
-        help="specify input file path (default = SIG_TF.DAT)",
+        default="SIG_TF.json",
+        help="specify input file path (default = SIG_TF.json)",
     )
 
     # Option argument extraction
