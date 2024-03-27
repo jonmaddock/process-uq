@@ -129,8 +129,6 @@ fiooic = 0.65
 *--------------------------*
 icc = 34
 ixc = 51 * fvdump
-ixc = 52 * vdalw [kV]
-boundu(52) = 10.0
 fvdump = 1.0
 vdalw = 10.0
 
@@ -228,7 +226,7 @@ ixc = 16
 boundl(16) = 0.3
 ohcth = 0.5
 
-* q
+* Safety factor near plasma edge
 ixc = 18
 boundl(18) = 3.0
 q = 3.5
@@ -610,6 +608,8 @@ vftf = 0.3
 
 * Conductor type switch (ITER Nb3Sn)
 i_tf_sc_mat = 1
+
+* Scan Variables
 
 nsweep = 17 * bmxlim, maximum peak toroidal field 
 isweep = 11

@@ -777,7 +777,10 @@ class Sctfcoil:
             jsc: {jsc}
             iooic: {iooic}
             jcritsc: {jcritsc}
-            Check conductor dimensions. fcond likely gone negative. fcond: {fcond}
+            Check conductor dimensions. Cable space area acs likely gone negative. acs: {acs}
+            This is likely because t_cable_radial or t_cable_toroidal has gone negative:
+            t_cable_radial: {sctfcoil_module.t_cable_radial}
+            t_cable_toroidal: {sctfcoil_module.t_cable_toroidal}
             """
             )
 
@@ -5818,7 +5821,7 @@ class Sctfcoil:
         sig_tf_wp_av_z,
     ):
         """Subroutine showing the writing the TF midplane stress analysis
-        in the output file and the stress distribution in the SIG_TF.DAT
+        in the output file and the stress distribution in the SIG_TF.json
         file used to plot stress distributions
         Author : S. Kahn
         """
@@ -6021,7 +6024,7 @@ class Sctfcoil:
                     sig_tf_tresca_max[ii],
                 )
 
-        # SIG_TF.DAT storage
+        # SIG_TF.json storage
         sig_file_data = {
             "Points per layers": n_radial_array,
             "Radius (m)": radial_array,
@@ -6702,8 +6705,8 @@ def extended_plane_strain(
 
         M_ext[1, 0, kk] = rad[kk] ** 2 * (1 - M_ext[0, 0, kk])
         M_ext[1, 1, kk] = 1 - rad[kk] ** 2 * M_ext[0, 1, kk]
-        M_ext[1, 2, kk] = -rad[kk] ** 2 * M_ext[0, 2, kk]
-        M_ext[1, 4, kk] = -rad[kk] ** 2 * M_ext[0, 4, kk]
+        M_ext[1, 2, kk] = -(rad[kk] ** 2) * M_ext[0, 2, kk]
+        M_ext[1, 4, kk] = -(rad[kk] ** 2) * M_ext[0, 4, kk]
         M_ext[2, 2, kk] = 1.0e0
         M_ext[3, 3, kk] = 1.0e0
         M_ext[4, 4, kk] = 1.0e0

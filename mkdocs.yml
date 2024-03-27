@@ -9,6 +9,7 @@ nav:
           - Installation on Ubuntu/Windows: installation/installation-ubuntu.md
           - Installation using Docker: installation/installation-docker.md
           - Installation using Singularity: installation/installation-singularity.md
+          - Installation on CSD3: installation/csd3-for-process.md
           - Visual Studio Code: installation/vs-code.md
       - Usage:
           - Running PROCESS: usage/running-process.md
@@ -56,7 +57,7 @@ nav:
           - Heat transport: eng-models/power-conversion-and-heat-dissipation-systems.md
           - Auxiliary Power Systems: eng-models/heating-and-current-drive.md
           - Cryostat and vacuum system: eng-models/cryostat-and-vacuum-system.md
-          - Plant Availability: eng-models/plant.md
+          - Plant Availability: eng-models/plant-availability.md
           - Power Requirements: eng-models/power-requirements.md
           - Vacuum Vessel: eng-models/vacuum-vessel.md
       - Unique Models:

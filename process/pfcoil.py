@@ -119,7 +119,7 @@ class PFCoil:
         tv.tim[0] = 0.0e0
         tv.tim[1] = tv.tramp
         tv.tim[2] = tv.tim[1] + tv.tohs
-        tv.tim[3] = tv.tim[2] + tv.theat
+        tv.tim[3] = tv.tim[2] + tv.t_fusion_ramp
         tv.tim[4] = tv.tim[3] + tv.tburn
         tv.tim[5] = tv.tim[4] + tv.tqnch
 
@@ -514,7 +514,7 @@ class PFCoil:
                     pf.ccls[nng] - (pf.ccl0[nng] * pfv.fcohbof / pfv.fcohbop)
                 )
 
-                # End of flat-top: t = tv.tramp+tv.tohs+tv.theat+tv.tburn
+                # End of flat-top: t = tv.tramp+tv.tohs+tv.t_fusion_ramp+tv.tburn
                 pfv.curpfb[ncl] = 1.0e-6 * (
                     pf.ccls[nng] - (pf.ccl0[nng] * (1.0e0 / pfv.fcohbop))
                 )
@@ -547,7 +547,7 @@ class PFCoil:
                     dz = 0.5e0 * (
                         bv.hmax * (1.0e0 - pfv.ohhghf) + bv.tfcth + 0.1e0
                     )  # ???
-                    area = 4.0e0 * dx * dz
+                    area = 4.0e0 * dx * dz * pfv.pf_current_safety_factor
 
                     # Number of turns
                     # CPTDIN[i] is the current per turn (input)
@@ -576,7 +576,10 @@ class PFCoil:
                 else:
                     # Other coils. N.B. Current density RJCONPF[i] is defined in
                     # routine INITIAL for these coils.
-                    area = abs(pfv.ric[i] * 1.0e6 / pfv.rjconpf[i])
+                    area = (
+                        abs(pfv.ric[i] * 1.0e6 / pfv.rjconpf[i])
+                        * pfv.pf_current_safety_factor
+                    )
 
                     pfv.turns[i] = abs((pfv.ric[i] * 1.0e6) / pfv.cptdin[i])
                     aturn[i] = area / pfv.turns[i]
@@ -600,7 +603,7 @@ class PFCoil:
                 i = i + 1
 
         # Calculate peak field, allowable current density, resistive
-        # power losses and volumes and weights for each PF coil
+        # power losses and volumes and weights for each PF coil, index i
         i = 0
         it = 0
         pfv.powpfres = 0.0e0
@@ -617,8 +620,8 @@ class PFCoil:
                         i + 1, iii + 1, it
                     )  # returns bpf, bpf2
 
-                # Allowable current density (for superconducting coils)
-
+                # Issue 1871.  MDK
+                # Allowable current density (for superconducting coils) for each coil, index i
                 if pfv.ipfres == 0:
                     bmax = max(abs(pfv.bpf[i]), abs(pf.bpf2[i]))
                     pfv.rjpfalw[i], jstrand, jsc, tmarg = self.superconpf(
@@ -675,12 +678,15 @@ class PFCoil:
 
                 if pfv.ipfres == 0:
                     # Superconducting coil
-                    # Previous assumptions: 500 MPa stress limit with 2/3 of the force
-                    # supported in the outer (steel) case.
-                    # Now, 500 MPa replaced by sigpfcalw, 2/3 factor replaced by sigpfcf
+                    # Updated assumptions: 500 MPa stress limit with all of the force
+                    # supported in the conduit (steel) case.
+                    # Now, 500 MPa replaced by sigpfcalw, sigpfcf now defaultly set to 1
 
                     areaspf = pfv.sigpfcf * forcepf / (pfv.sigpfcalw * 1.0e6)
 
+                    # Thickness of hypothetical steel casing assumed to encase the PF
+                    # winding pack; in reality, the steel is distributed
+                    # throughout the conductor. Issue #152
                     # Assume a case of uniform thickness around coil cross-section
                     # Thickness found via a simple quadratic equation
 
@@ -2314,7 +2320,7 @@ class PFCoil:
         op.osubhd(self.outfile, "Geometry of PF coils, central solenoid and plasma:")
         op.write(
             self.outfile,
-            "coil\t\t\tR(m)\t\tZ(m)\t\tdR(m)\t\tdZ(m)\t\tturns\t\tsteel thickness(m)",
+            "coil\t\t\tR(m)\t\tZ(m)\t\tdR(m)\t\tdZ(m)\t\tturns",
         )
         op.oblnkl(self.outfile)
 
@@ -2322,7 +2328,7 @@ class PFCoil:
         for k in range(pf.nef):
             op.write(
                 self.outfile,
-                f"PF {k}\t\t\t{pfv.rpf[k]:.2e}\t{pfv.zpf[k]:.2e}\t{pfv.rb[k]-pfv.ra[k]:.2e}\t{abs(pfv.zh[k]-pfv.zl[k]):.2e}\t{pfv.turns[k]:.2e}\t{pfv.pfcaseth[k]:.2e}",
+                f"PF {k}\t\t\t{pfv.rpf[k]:.2e}\t{pfv.zpf[k]:.2e}\t{pfv.rb[k]-pfv.ra[k]:.2e}\t{abs(pfv.zh[k]-pfv.zl[k]):.2e}\t{pfv.turns[k]:.2e}",
             )
 
         for k in range(pf.nef):
@@ -2691,7 +2697,7 @@ class PFCoil:
             ):
                 pfv.ric[ic] = pfv.curpff[ic]
 
-            # End of flat-top, t = tramp + tohs + theat + tburn
+            # End of flat-top, t = tramp + tohs + t_fusion_ramp + tburn
             if (abs(pfv.curpfb[ic]) >= abs(pfv.curpfs[ic])) and (
                 abs(pfv.curpfb[ic]) >= abs(pfv.curpff[ic])
             ):
@@ -2899,11 +2905,11 @@ class PFCoil:
             jcritstr = jcritsc * (1.0e0 - fcu)
 
             # The CS coil current at EOF
-            ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
+            # ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
             # The CS coil current/copper area calculation for quench protection
             # Copper area = (area of coil - area of steel)*(1- void fraction)*
             # (fraction of copper in strands)
-            rcv.copperaoh_m2 = ioheof / (pfv.awpoh * (1.0 - pfv.vfohc) * pfv.fcuohsu)
+            # rcv.copperaoh_m2 = ioheof / (pfv.awpoh * (1.0 - pfv.vfohc) * pfv.fcuohsu)
 
         elif isumat == 7:
             # Durham Ginzburg-Landau critical surface model for Nb-Ti
@@ -2913,7 +2919,7 @@ class PFCoil:
             jcritstr = jcritsc * (1.0e0 - fcu)
 
             # The CS coil current at EOF
-            ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
+            # ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
 
         elif isumat == 8:
             # Durham Ginzburg-Landau critical surface model for REBCO
@@ -2924,9 +2930,9 @@ class PFCoil:
             jcritstr = jcritsc * (1.0e0 - fcu)
 
             # The CS coil current at EOF
-            ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
+            # ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
             # The CS coil current/copper area calculation for quench protection
-            rcv.copperaoh_m2 = ioheof / (pfv.awpoh * (1.0 - pfv.vfohc) * pfv.fcuohsu)
+            # rcv.copperaoh_m2 = ioheof / (pfv.awpoh * (1.0 - pfv.vfohc) * pfv.fcuohsu)
 
         elif isumat == 9:
             # Hazelton experimental data + Zhai conceptual model for REBCO
@@ -2939,14 +2945,24 @@ class PFCoil:
             jcritstr = jcritsc * (1.0e0 - fcu)
 
             # The CS coil current at EOF
-            ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
+            # ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
             # The CS coil current/copper area calculation for quench protection
-            rcv.copperaoh_m2 = ioheof / (pfv.awpoh * (1.0 - pfv.vfohc) * pfv.fcuohsu)
+            # rcv.copperaoh_m2 = ioheof / (pfv.awpoh * (1.0 - pfv.vfohc) * pfv.fcuohsu)
 
         else:
             # Error condition
             eh.idiag[0] = isumat
             eh.report_error(156)
+
+            # Issue 1871 MDK. The CS calculation has been removed from the isumat option list,
+            # and only calculated if the CS properties are needed.
+            if bv.iohcl != 0:
+                # CS coil current at EOF
+                ioheof = bv.hmax * pfv.ohhghf * bv.ohcth * 2.0 * pfv.coheof
+                # CS coil current/copper area calculation for quench protection
+                rcv.copperaoh_m2 = ioheof / (
+                    pfv.awpoh * (1.0 - pfv.vfohc) * pfv.fcuohsu
+                )
 
         # Critical current density in winding pack
         jcritwp = jcritstr * (1.0e0 - fhe)

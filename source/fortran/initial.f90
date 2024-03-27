@@ -17,14 +17,14 @@ subroutine initial
         init_itv_30, init_itv_31, init_itv_32, init_itv_33, init_itv_34, init_itv_35, &
         init_itv_36, init_itv_37, init_itv_38, init_itv_39, init_itv_40, init_itv_41, &
         init_itv_42, init_itv_44, init_itv_45, init_itv_46, init_itv_47, init_itv_48, &
-        init_itv_49, init_itv_50, init_itv_51, init_itv_52, init_itv_53, init_itv_54, &
+        init_itv_49, init_itv_50, init_itv_51, init_itv_53, init_itv_54, &
         init_itv_56, init_itv_57, init_itv_58, init_itv_59, init_itv_60, init_itv_61, &
         init_itv_62, init_itv_63, init_itv_64, init_itv_65, init_itv_66, init_itv_67, &
         init_itv_68, init_itv_69, init_itv_70, init_itv_71, init_itv_72, init_itv_73, &
         init_itv_74, init_itv_75, init_itv_79, init_itv_81, init_itv_82, init_itv_83, &
         init_itv_84, init_itv_85, init_itv_86, init_itv_89, init_itv_90, init_itv_91, &
         init_itv_92, init_itv_93, init_itv_94, init_itv_95, init_itv_96, init_itv_97, &
-        init_itv_98, init_itv_102, init_itv_103, init_itv_104, init_itv_105, &
+        init_itv_98, init_itv_103, init_itv_104, init_itv_105, &
         init_itv_106, init_itv_107, init_itv_108, init_itv_109, init_itv_110, &
         init_itv_111, init_itv_112, init_itv_113, init_itv_114, init_itv_115, &
         init_itv_116, init_itv_117, init_itv_118, init_itv_119, init_itv_120, &
@@ -106,7 +106,7 @@ subroutine initial
     call init_itv_49
     call init_itv_50
     call init_itv_51
-    call init_itv_52
+    
     call init_itv_53
     call init_itv_54
 
@@ -155,7 +155,6 @@ subroutine initial
     call init_itv_97
     call init_itv_98
     !Not used
-    call init_itv_102
     call init_itv_103
     call init_itv_104
     call init_itv_105
@@ -261,7 +260,7 @@ subroutine check
     use physics_variables, only: aspect, eped_sf, fdeut, fgwped, fhe3, &
         fgwsep, ftrit, ibss, i_single_null, icurr, ieped, idivrt, ishape, &
         iradloss, isc, ipedestal, ilhthresh, itart, nesep, rhopedn, rhopedt, &
-        rnbeam, ifispact, neped, te, tauee_in, tesep, teped, itartpf, ftar
+        rnbeam, neped, te, tauee_in, tesep, teped, itartpf, ftar
     use pulse_variables, only: lpulse
     use reinke_variables, only: fzactual, impvardiv
     use tfcoil_variables, only: casthi, casthi_is_fraction, casths, i_tf_sup, &
@@ -345,8 +344,13 @@ subroutine check
 
     if (ftrit < 1.0D-3) then  !  tritium fraction is negligible
         triv = 0.0D0
-        ifispact = 0
         trithtmw = 0.0D0
+    end if
+
+    if (fimp(2) .ne. 0.1D0) then
+        write(*,*)'The thermal alpha/electron density ratio should be controlled using ralpne (itv 109) and not fimp(2).'
+        write(*,*)'fimp(2) should be removed from the input file, or set to the default value 0.1D0.'
+        stop 1
     end if
 
     !  Impurity fractions
@@ -375,7 +379,7 @@ subroutine check
 
     !  Plasma profile consistency checks
     if (ife /= 1) then
-        if (ipedestal == 1 .or. ipedestal == 2) then
+        if (ipedestal == 1) then
 
             !  Temperature checks
             if (teped < tesep) then
