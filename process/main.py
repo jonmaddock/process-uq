@@ -469,7 +469,8 @@ class SingleRun:
                 # To ensure that, at the start of a run, all physics/engineering
                 # variables are fully initialised with consistent values, we perform
                 # a second evaluation call here
-                caller.call_models(x)
+                for call in range(6):
+                    caller.call_models(x)
                 self.ifail = 6
 
             final.finalise(self.models, self.ifail)
