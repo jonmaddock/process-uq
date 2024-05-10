@@ -103,9 +103,10 @@ class Power:
             albusa[ig] = abs(pfcoil_variables.cptdin[ic]) / 100.0e0
 
             #  Resistance of bussing for circuit (ohm)
-            #  Include 50% enhancement for welds, joints etc, (G. Gorker, ORNL)
             #  pfbusl : bus length for each PF circuit (m)
-            pfbusr[ig] = 1.5e0 * 2.62e-4 * pfbusl / albusa[ig]
+            #  pfbusr[ig] = 1.5e0 * 2.62e-4 * pfbusl / albusa[ig]
+            #  I have removed the fudge factor of 1.5 but included it in the value of rhopfbus
+            pfbusr[ig] = pfcoil_variables.rhopfbus * pfbusl / (albusa[ig] / 10000)
 
             #  Total PF coil resistance (during burn)
             #  pfcoil_variables.ric : maximum current in coil (A)
@@ -922,17 +923,6 @@ class Power:
                 heat_transport_variables.pgrossmw - heat_transport_variables.precircmw
             )
 
-            #  Scaling to prevent negative heat_transport_variables.pnetelmw
-            # Do NOT rescale if this is the last run through.
-            if (
-                (heat_transport_variables.pnetelmw < 1.0e0)
-                and (cost_variables.ipnet == 0)
-                and (not output)
-            ):
-                heat_transport_variables.pnetelmw = 1.0e0 / (
-                    1.0e0 + abs(heat_transport_variables.pnetelmw - 1.0e0)
-                )
-
             #  Recirculating power fraction
             cirpowfr = (
                 heat_transport_variables.pgrossmw - heat_transport_variables.pnetelmw
@@ -1623,7 +1613,7 @@ class Power:
         elif physics_variables.iradloss == 2:
             po.ocmmnt(
                 self.outfile,
-                "Total power loss is scaling power only (physics_variables.iradloss = 1).",
+                "Total power loss is scaling power only (physics_variables.iradloss = 2).",
             )
             po.ocmmnt(self.outfile, "This is not recommended for power plant models.")
             po.ovarrf(
@@ -2069,7 +2059,7 @@ class Power:
         t_ip_up = times_variables.tohs
 
         # Plasma heating phase (s)
-        t_heat = times_variables.theat
+        t_heat = times_variables.t_fusion_ramp
 
         # Flat-top phase (s)
         t_flat_top = times_variables.tburn
@@ -2152,7 +2142,7 @@ class Power:
 
         po.write(self.outfile, "Pulse timings [s]:")
         po.oblnkl(self.outfile)
-        po.write(self.outfile, "tramp tohs theat tburn tqnch tdwell")
+        po.write(self.outfile, "tramp tohs t_fusion_ramp tburn tqnch tdwell")
         po.write(self.outfile, "----- ---- ----- ----- ----- ------")
         po.write(
             self.outfile,
@@ -2163,7 +2153,7 @@ class Power:
 
         po.write(self.outfile, "Continous power usage [MWe]:")
         po.oblnkl(self.outfile)
-        po.write(self.outfile, "System tramp tohs theat tburn tqnch tdwell")
+        po.write(self.outfile, "System tramp tohs t_fusion_ramp tburn tqnch tdwell")
         po.write(self.outfile, "------ ----- ---- ----- ----- ----- ------")
         po.write(
             self.outfile,
@@ -2212,7 +2202,7 @@ class Power:
 
         po.write(self.outfile, "Intermittent power usage [MWe]:")
         po.oblnkl(self.outfile)
-        po.write(self.outfile, "System tramp tohs theat tburn tqnch tdwell")
+        po.write(self.outfile, "System tramp tohs t_fusion_ramp tburn tqnch tdwell")
         po.write(self.outfile, "------ ----- ---- ----- ----- ----- ------")
         po.write(
             self.outfile,
@@ -2238,7 +2228,7 @@ class Power:
 
         po.write(self.outfile, "Power production [MWe]:")
         po.oblnkl(self.outfile)
-        po.write(self.outfile, " tramp tohs theat tburn tqnch tdwell avg")
+        po.write(self.outfile, " tramp tohs t_fusion_ramp tburn tqnch tdwell avg")
         po.write(self.outfile, " ----- ---- ----- ----- ----- ------ ---")
         po.write(
             self.outfile,
@@ -2485,14 +2475,9 @@ class Power:
             abus = tfcoil_variables.cpttf / tfcoil_variables.jbus
 
             # Bus resistance [ohm]
-            # Bus resistivity (tfcoil_variables.rhotfbus) default value : -1.0e0
-            # If this value is chosen, the bus resistivity is the same as the leg one
-            if (
-                abs(tfcoil_variables.rhotfbus + 1.0e0)
-                < numpy.finfo(float(tfcoil_variables.rhotfbus)).eps
-            ):
-                tfcoil_variables.rhotfbus = tfcoil_variables.rhotfleg
-
+            # Bus resistivity (tfcoil_variables.rhotfbus)
+            # Issue #1253: there was a fudge here to set the bus bar resistivity equal
+            # to the TF conductor resistivity. I have removed this.
             tfbusres = tfcoil_variables.rhotfbus * tfcoil_variables.tfbusl / abus
 
             #  Bus mass (kg)
@@ -2723,7 +2708,8 @@ class Power:
         albuswt = 2.7e0 * albusa * tfbusl / 1.0e4
 
         #  Total resistance of TF bus, ohms
-        rtfbus = 2.62e-4 * tfbusl / albusa
+        # rtfbus = 2.62e-4 * tfbusl / albusa
+        rtfbus = tfcoil_variables.rhotfbus * tfbusl / (albusa / 10000)
 
         #  Total voltage drop across TF bus, volts
         vtfbus = 1000.0e0 * itfka * rtfbus

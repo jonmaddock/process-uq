@@ -2,10 +2,12 @@
 
 import logging
 from process.fortran import numerics, global_variables
+from process.utilities.f2py_string_patch import f2py_compatible_to_string
 import numpy as np
 from process.evaluators import Evaluators
 from abc import ABC, abstractmethod
 from typing import Optional, Union
+import importlib
 from pyvmcon import (
     AbstractProblem,
     Result,
@@ -168,7 +170,9 @@ class Vmcon(_Solver):
         if self.b is not None:
             B = np.identity(numerics.nvar) * self.b
 
-        def _solver_callback(i: int, _x, _result, convergence_param: float):
+        def _solver_callback(i: int, _result, _x, convergence_param: float):
+            numerics.nviter = i + 1
+            global_variables.convergence_parameter = convergence_param
             print(
                 f"{i+1} | Convergence Parameter: {convergence_param:.3E}",
                 end="\r",
@@ -201,9 +205,12 @@ class Vmcon(_Solver):
             res = e.result
 
         except ValueError as e:
-            logger.warning(
-                f"Active iteration variables are : {list(enumerate(numerics.ixc[:numerics.nvar]))}"
-            )
+            itervar_name_list = ""
+            for count, iter_var in enumerate(numerics.ixc[: numerics.nvar]):
+                itervar_name = f2py_compatible_to_string(numerics.lablxc[iter_var - 1])
+                itervar_name_list += f"{count}: {itervar_name} \n"
+
+            logger.warning(f"Active iteration variables are : \n{itervar_name_list}")
             raise e
 
         else:
@@ -220,6 +227,22 @@ class Vmcon(_Solver):
         return self.info
 
 
+class VmconBounded(Vmcon):
+    """A solver that uses VMCON but checks x is in bounds before running"""
+
+    def set_opt_params(self, x_0: np.ndarray) -> None:
+        lower_violated = np.less(x_0, self.bndl)
+        upper_violated = np.greater(x_0, self.bndu)
+
+        for index, entry in enumerate(lower_violated):
+            if entry:
+                x_0[index] = self.bndl[index]
+        for index, entry in enumerate(upper_violated):
+            if entry:
+                x_0[index] = self.bndu[index]
+        self.x_0 = x_0
+
+
 def get_solver(solver_name: str = "vmcon") -> _Solver:
     """Return a solver instance.
 
@@ -232,7 +255,31 @@ def get_solver(solver_name: str = "vmcon") -> _Solver:
 
     if solver_name == "vmcon":
         solver = Vmcon()
+    elif solver_name == "vmcon_bounded":
+        solver = VmconBounded()
     else:
-        raise ValueError(f'Unrecognised solver name argument "{solver_name}"')
+        try:
+            solver = load_external_solver(solver_name)
+        except Exception as e:
+            raise ValueError(
+                f'Solver name is not an inbuilt PROCESS solver or recognised package "{solver_name}"'
+            ) from e
 
     return solver
+
+
+def load_external_solver(package: str):
+    """Attempts to load a package of name `package`.
+
+    If a package of the name is available, return the `__process_solver__`
+    attribute of that package or raise an `AttributeError`."""
+    module = importlib.import_module(package)
+
+    solver = getattr(module, "__process_solver__", None)
+
+    if solver is None:
+        raise AttributeError(
+            f"Module {module.__name__} does not have a '__process_solver__' attribute."
+        )
+
+    return solver()

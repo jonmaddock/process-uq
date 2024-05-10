@@ -148,7 +148,7 @@ contains
     use numerics, only: lablxc, boundl, boundu
     implicit none
     lablxc(6) = 'dene          '
-    boundl(6) = 1.00D19
+    boundl(6) = 2.00D19
     boundu(6) = 1.00D21
   end subroutine init_itv_6
 
@@ -1202,29 +1202,13 @@ contains
     fvdump = ratio
   end subroutine set_itv_51
 
+  !! <LI> (52) NOT USED
   !---------------------------------
 
-  subroutine init_itv_52
-    !! <LI> (52) vdalw
-    use numerics, only: lablxc, boundl, boundu
-    implicit none
-    lablxc(52) = 'vdalw         '
-    boundl(52) = 0.001D0
-    boundu(52) = 1.000D6
-  end subroutine init_itv_52
-
   real(kind(1.d0)) function itv_52()
-    use tfcoil_variables, only: vdalw
     implicit none
-    itv_52 =  vdalw
+    write(*,*) 'Iteration variable 52 is no longer in use.'
   end function itv_52
-
-  subroutine set_itv_52(ratio)
-    use tfcoil_variables, only: vdalw
-    implicit none
-    real(kind(1.d0)) :: ratio
-    vdalw = ratio
-  end subroutine set_itv_52
 
   !---------------------------------
 
@@ -2230,31 +2214,7 @@ contains
 
   !---------------------------------
 
-  subroutine init_itv_102
-    !! <LI> (102) fimpvar
-    use numerics, only: lablxc, boundl, boundu
-    implicit none
-    lablxc(102) = 'fimpvar       '
-    boundl(102) = 1.00D-6
-    boundu(102) = 0.010D0
-  end subroutine init_itv_102
 
-  real(kind(1.d0)) function itv_102()
-    use impurity_radiation_module, only: impurity_arr_frac
-    use impurity_radiation_module, only: impvar
-    implicit none
-    itv_102 =  impurity_arr_frac(impvar)
-  end function itv_102
-
-  subroutine set_itv_102(ratio)
-    use impurity_radiation_module, only: impurity_arr_frac
-    use impurity_radiation_module, only: impvar
-    use impurity_radiation_module, only: fimpvar
-    implicit none
-    real(kind(1.d0)) :: ratio
-    fimpvar = ratio
-    impurity_arr_frac(impvar) = fimpvar
-  end subroutine set_itv_102
 
   !---------------------------------
 
@@ -3268,8 +3228,8 @@ contains
     use numerics, only: lablxc, boundl, boundu
     implicit none
     lablxc(145) = 'fgwped        '
-    boundl(145) = 0.500D0
-    boundu(145) = 1.000D0
+    boundl(145) = 0.100D0
+    boundu(145) = 0.9D0
   end subroutine init_itv_145
 
   real(kind(1.d0)) function itv_145()
@@ -3396,12 +3356,12 @@ contains
   !---------------------------------
 
   subroutine init_itv_152
-    !! <LI> (152) fbmaxcs : Ratio of separatrix density to Greenwald density
+    !! <LI> (152) fgwsep : Ratio of separatrix density to Greenwald density
     use numerics, only: lablxc, boundl, boundu
     implicit none
     lablxc(152) = 'fgwsep        '
     boundl(152) = 0.001D0
-    boundu(152) = 1.000D0
+    boundu(152) = 0.5D0
   end subroutine init_itv_152
 
   real(kind(1.d0)) function itv_152()
@@ -3844,52 +3804,55 @@ contains
     beta_div = ratio
   end subroutine set_itv_170
 
-  !---------------------------------
-  ! DUMMY variables below here
-  !---------------------------------
-
   subroutine init_itv_171
-    !! <LI> (171) DUMMY : Description
+    !! <LI> (171) casths_fraction: TF side case fraction of toroidal thickness
     use numerics, only: lablxc, boundl, boundu
     implicit none
-    lablxc(171) = 'DUMMY         '
-    boundl(171) = 1.0d-99
-    boundu(171) = 1.0d99
+    lablxc(171) = 'casths_fraction         '
+    boundl(171) = 0.01
+    boundu(171) = 0.99
   end subroutine init_itv_171
 
   real(kind(1.d0)) function itv_171()
+    use tfcoil_variables, only: casths_fraction
     implicit none
-    itv_171 = DUMMY
+    itv_171 = casths_fraction
   end function itv_171
 
   subroutine set_itv_171(ratio)
+    use tfcoil_variables, only: casths_fraction
     implicit none
     real(kind(1.d0)) :: ratio
-    DUMMY = ratio
+    casths_fraction = ratio
   end subroutine set_itv_171
 
   !---------------------------------
 
   subroutine init_itv_172
-    !! <LI> (172) DUMMY : Description
+    !! <LI> (172) casths: TF side case thickness [m]
     use numerics, only: lablxc, boundl, boundu
     implicit none
-    lablxc(172) = 'DUMMY         '
-    boundl(172) = 1.0d-99
-    boundu(172) = 1.0d99
+    lablxc(172) = 'casths        '
+    boundl(172) = 0.001
+    boundu(172) = 1.0
   end subroutine init_itv_172
 
   real(kind(1.d0)) function itv_172()
+    use tfcoil_variables, only: casths
     implicit none
-    itv_172 = DUMMY
+    itv_172 = casths
   end function itv_172
 
   subroutine set_itv_172(ratio)
+    use tfcoil_variables, only: casths
     implicit none
     real(kind(1.d0)) :: ratio
-    DUMMY = ratio
+    casths = ratio
   end subroutine set_itv_172
-
+  
+  !---------------------------------
+  ! DUMMY variables below here
+  !---------------------------------
   !---------------------------------
 
   subroutine init_itv_173
@@ -4084,7 +4047,7 @@ contains
            case (99);
            case (100);
            case (101);
-           case (102);  xcm(i) = itv_102()
+           case (102);
            case (103);  xcm(i) = itv_103()
            case (104);  xcm(i) = itv_104()
            case (105);  xcm(i) = itv_105()
@@ -4152,10 +4115,10 @@ contains
            case (167);  xcm(i) = itv_167()
            case (168);  xcm(i) = itv_168()
            case (169);  xcm(i) = itv_169()
-            ! DUMMY Cases
            case (170);  xcm(i) = itv_170()
-           case (171);  xcm(i) = itv_171()
-           case (172);  xcm(i) = itv_172()
+           case (171);  xcm(i) = itv_171() 
+           case (172);  xcm(i) = itv_172() 
+            ! DUMMY Cases
            case (173);  xcm(i) = itv_173()
            case (174);  xcm(i) = itv_174()
            case (175);  xcm(i) = itv_175()
@@ -4301,7 +4264,7 @@ contains
            case (49);  call set_itv_49(ratio)
            case (50);  call set_itv_50(ratio)
            case (51);  call set_itv_51(ratio)
-           case (52);  call set_itv_52(ratio)
+           case (52);  
            case (53);  call set_itv_53(ratio)
            case (54);  call set_itv_54(ratio)
            case (55);
@@ -4351,7 +4314,7 @@ contains
            case (99);
            case (100);
            case (101);
-           case (102);  call set_itv_102(ratio)
+           case (102);
            case (103);  call set_itv_103(ratio)
            case (104);  call set_itv_104(ratio)
            case (105);  call set_itv_105(ratio)
@@ -4419,10 +4382,10 @@ contains
            case (167);  call set_itv_167(ratio)
            case (168);  call set_itv_168(ratio)
            case (169);  call set_itv_169(ratio)
-            ! DUMMY Cases
            case (170);  call set_itv_170(ratio)
            case (171);  call set_itv_171(ratio)
-           case (172);  call set_itv_172(ratio)
+           case (172);  call set_itv_172(ratio) 
+            ! DUMMY Cases
            case (173);  call set_itv_173(ratio)
            case (174);  call set_itv_174(ratio)
            case (175);  call set_itv_175(ratio)

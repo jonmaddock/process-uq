@@ -190,7 +190,6 @@ be described as 1/2-D.  The relevant profile index variables are
 
 If `ipedestal` = 1, 2 or 3 the density and temperature profiles include a pedestal.  
 If `ipedestal` = 1 the density and temperature profiles use the forms given below [^6].  
-If `ipedestal` = 2 or 3 the profiles are determined by the transport code PLASMOD.
 
 $$\begin{aligned}
 \mbox{density:} \qquad n(\rho) = \left\{ 
@@ -267,6 +266,11 @@ simulations.
 
 If `ipedestal` = 1 or 2 then the pedestal density `neped` is set as a fraction `fgwped` of the 
 Greenwald density (providing `fgwped` >= 0).  The default value of `fgwped` is 0.8[^7]. 
+
+!!! warning " Un-realistic profiles"
+
+    If `ipedestal >= 1` it is highly recommended to use constraint equation 81 (icc=81). This enforces solutions in which $n_0$ has to be greater than $n_{ped}$. 
+    Negative $n_0$ values can also arise during iteration, so it is important to be weary on how low the lower bound for $n_e (\mathtt{dene})$ is set.
 
 ## Beta Limit
 
@@ -378,10 +382,8 @@ plasma quasi-neutrality taking into account the fuel ratios
 be input by the user or selected as an iteration variable.
 
 The impurity fraction of any one of the elements listed in array `fimp` (other than hydrogen 
-isotopes and helium) may be used as an iteration variable. The element to use is specified using 
-input parameter `impvar`, which may be set to a value between 3 and `nimp`, and the initial 
-estimate to use for the element's impurity fraction must be set using iteration 
-variable no. 102 (`fimpvar`).
+isotopes and helium) may be used as an iteration variable.
+The impurity fraction to be varied can be set simply with `fimp(i) = <value>`, where `i` is the corresponding number value for the desired impurity in the table above.
 
 The synchrotron radiation power[^11] [^12] is assumed to originate from the 
 plasma core. The wall reflection factor `ssync` may be set by the user.
@@ -507,6 +509,7 @@ most commonly used is the so-called IPB98(y,2) scaling.
 | 47 | NSTX-Petty08 Hybrid (H-mode) | J. Menard 2019, Phil. Trans. R. Soc. A 377:201704401 |
 | 48 | NSTX gyro-Bohm (Buxton) (H-mode; spherical tokamak) | P. Buxton et al. 2019 Plasma Phys. Control. Fusion 61 035006 |
 | 49 | Use input `tauee_in` |  |
+| 50 | ITPA20 (H-mode) | G. Verdoolaege et al 2021 Nucl. Fusion 61 076006 |
 
 ### Effect of radiation on energy confinement
 
@@ -542,7 +545,7 @@ allowance for radiation. This is not recommended for power plant models.
 The figure below shows the flow of power as calculated by the code.
 
 <figure markdown>
-![Power balance](../../images/Overall-power-flow.png){ width="100%"}
+![Power balance](../images/Overall-power-flow.png){ width="100%"}
 <figcaption>Figure 1: Machine build for D-shaped major components</figcaption>
 </figure>
 
