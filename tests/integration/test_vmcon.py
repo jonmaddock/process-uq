@@ -5,6 +5,7 @@ behaviour with different initial guesses for the solution vector x
 Expected answers for tests 1 to 3 are given in
 VMCON documentation ANL-80-64
 """
+
 from process.evaluators import Evaluators
 from process.fortran import init_module
 from process.fortran import error_handling
@@ -577,6 +578,10 @@ def get_case5():
     case.solver_args.x = np.array(
         [5.0]
     )  # Try different values, e.g. 5.0, 2.0, 1.0, 0.0...
+    case.solver_args.bndl = np.zeros(1)
+    case.solver_args.bndu = np.full(1, 5.0)
+    case.solver_args.ilower = np.zeros(1)
+    case.solver_args.iupper = np.zeros(1)
 
     # Expected values
     case.exp.x = np.array([3.0])
